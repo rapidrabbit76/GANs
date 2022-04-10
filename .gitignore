@@ -1,0 +1,17 @@
+# VSCODE
+.vscode/
+
+# DATASET
+DATASET/
+
+# logger
+tensorflow/
+wandb/
+
+# CACHE
+**__pycache__**
+
+# ETC
+*.sh
+old/
+
