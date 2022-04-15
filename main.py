@@ -75,3 +75,69 @@ def hyperparameters():
 
     return args
 
+
+def main(args):
+    ############# SETUP ################
+    pl.seed_everything(args.seed)
+
+    DATAMODULE = DATAMODULE_TABLE[args.dataset]
+    TRANSFORM = TRANSFORMS_TABLE[args.transform]
+    MODEL = MODEL_TABLE[args.GAN]
+
+    ############# DATAMODULE ################
+    transform = TRANSFORM(
+        image_shape=[args.image_channels, args.image_size, args.image_size],
+    )
+    datamodule = DATAMODULE(
+        root_dir=args.root_dir,
+        train_transforms=transform,
+        val_transforms=transform,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+
+    ############# MODEL ################
+    model = MODEL(args)
+
+    ############# LOGGER ###############
+    wandb_logger = WandbLogger(
+        project=args.project_name,
+        name=f"{args.GAN}-{args.dataset}",
+    )
+    wandb_logger.watch(model, log="all", log_freq=args.log_every_n_steps)
+    save_dir = wandb_logger.experiment.dir
+
+    ############# CALLBACKS ############
+    callbacks = [
+        TQDMProgressBar(refresh_rate=5),
+        LearningRateMonitor(logging_interval="epoch"),
+        ModelCheckpoint(save_dir, save_last=True),
+    ]
+
+    ############### TRAINER ##############
+    trainer = pl.Trainer.from_argparse_args(
+        args,
+        logger=wandb_logger,
+        callbacks=callbacks,
+    )
+    ########### TRAINING START ###########
+    trainer.fit(model, datamodule=datamodule)
+
+    ############### Artifacts ################
+    model = model.cpu()
+    torchscript_path = os.path.join(
+        save_dir,
+        f"{args.GAN}-{args.dataset}.jit",
+    )
+    example_inputs = torch.rand([1, args.z_dim])
+    model.to_torchscript(torchscript_path, "trace", example_inputs)
+
+    if args.upload_artifacts:
+        artifacts = wandb.Artifact(f"{args.GAN}-{args.dataset}", type="model")
+        artifacts.add_file(torchscript_path)
+        wandb.log_artifact(artifacts)
+
+
+if __name__ == "__main__":
+    args = hyperparameters()
+    info = main(args)
