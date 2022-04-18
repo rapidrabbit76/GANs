@@ -81,8 +81,8 @@ class GAN(pl.LightningModule):
         loss = {
             "loss": loss,
             "d_loss": loss,
-            "real_prob": torch.mean(torch.sigmoid(real_logits.detach())),
-            "fake_prob": torch.mean(torch.sigmoid(fake_logits.detach())),
+            "prob/real_prob": torch.mean(torch.sigmoid(real_logits.detach())),
+            "prob/fake_prob": torch.mean(torch.sigmoid(fake_logits.detach())),
         }
         return loss
 
@@ -103,7 +103,17 @@ class GAN(pl.LightningModule):
                 self.hparams.image_size,
             ],
         )
+        # tensorboard logger
+        sample = make_grid(samples, int(self.hparams.sample_count ** 0.5))
+        self.logger[0].experiment.add_image(
+            "sample", sample, self.current_epoch
+        )
+
+        # wandb logger
         sample = wandb.Image(samples)
-        self.logger.experiment.log({"sample": sample}, step=self.global_step)
+        self.logger[1].experiment.log(
+            {"sample": sample},
+            step=self.global_step,
+        )
         self.train(True)
         torch.set_grad_enabled(True)

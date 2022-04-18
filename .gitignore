@@ -5,7 +5,7 @@
 DATASET
 
 # logger
-tensorflow/
+tensorboard/
 wandb/
 
 # CACHE

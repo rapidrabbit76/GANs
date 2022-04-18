@@ -1,5 +1,4 @@
 import argparse
-from asyncio.log import logger
 import os
 
 import pytorch_lightning as pl
@@ -10,7 +9,7 @@ from pytorch_lightning.callbacks import (
     TQDMProgressBar,
     LearningRateMonitor,
 )
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
 import wandb
 from datamodules import DATAMODULE_TABLE
 from transforms import TRANSFORMS_TABLE
@@ -100,10 +99,9 @@ def main(args):
     model = MODEL(args)
 
     ############# LOGGER ###############
-    wandb_logger = WandbLogger(
-        project=args.project_name,
-        name=f"{args.GAN}-{args.dataset}",
-    )
+    name = f"{args.GAN}-{args.dataset}"
+    tb_logger = TensorBoardLogger("tensorboard", name=name)
+    wandb_logger = WandbLogger(project=args.project_name, name=name)
     wandb_logger.watch(model, log="all", log_freq=args.log_every_n_steps)
     save_dir = wandb_logger.experiment.dir
 
@@ -117,7 +115,7 @@ def main(args):
     ############### TRAINER ##############
     trainer = pl.Trainer.from_argparse_args(
         args,
-        logger=wandb_logger,
+        logger=[tb_logger, wandb_logger],
         callbacks=callbacks,
     )
     ########### TRAINING START ###########
