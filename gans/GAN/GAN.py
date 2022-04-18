@@ -117,3 +117,8 @@ class GAN(pl.LightningModule):
         )
         self.train(True)
         torch.set_grad_enabled(True)
+
+    def to_torchscript(self, file_path: str):
+        return super().to_torchscript(
+            file_path, "trace", torch.rand([1, self.hparams.z_dim])
+        )

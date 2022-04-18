@@ -1,8 +1,11 @@
+import os
+
 import pytest
-from easydict import EasyDict
 import torch
-from tests.conftest import tensor
+from easydict import EasyDict
 from gans import GAN
+
+from tests.conftest import tensor
 
 
 class TestGAN:
@@ -49,3 +52,15 @@ class TestGAN:
     def test_disc_step(self, model: GAN, images):
         x = model.training_step((images, 0), 0, 1)
         assert list(x.shape) == []
+
+    def test_save_to_torchscript(self, model: GAN, save_dir):
+        torchscript_path = os.path.join(save_dir.name, "temp.jit")
+        model.to_torchscript(torchscript_path)
+        assert os.path.exists(torchscript_path)
+
+    def test_torchscript_inference(self, save_dir, z, images):
+        torchscript_path = os.path.join(save_dir.name, "temp.jit")
+        model = torch.jit.load(torchscript_path)
+        x = model(z)
+        N, C, H, W = images.shape
+        assert list(x.shape) == [N, C * H * W]
