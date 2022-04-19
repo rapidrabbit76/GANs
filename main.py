@@ -11,9 +11,9 @@ from pytorch_lightning.callbacks import (
 )
 from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
 import wandb
-from datamodules import DATAMODULE_TABLE
-from transforms import TRANSFORMS_TABLE
-from gans import MODEL_TABLE
+from datamodules import build_datamodule, DATAMODULE_LIST
+from transforms import build_transform, TRANSFORMS_LIST
+from gans import build_model, MODEL_LIST
 
 # from gans import
 
@@ -35,13 +35,13 @@ def hyperparameters():
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=list(DATAMODULE_TABLE.keys()),
+        choices=DATAMODULE_LIST,
         default="MNIST",
     )
     parser.add_argument(
         "--transform",
         type=str,
-        choices=list(TRANSFORMS_TABLE.keys()),
+        choices=TRANSFORMS_LIST,
         default="BASE",
     )
     parser.add_argument("--root_dir", type=str)
@@ -53,7 +53,7 @@ def hyperparameters():
     parser.add_argument(
         "--GAN",
         type=str,
-        choices=list(MODEL_TABLE.keys()),
+        choices=MODEL_LIST,
         default="GAN",
     )
     parser.add_argument("--g_dim", type=int, default=16)
@@ -79,24 +79,21 @@ def main(args):
     ############# SETUP ################
     pl.seed_everything(args.seed)
 
-    DATAMODULE = DATAMODULE_TABLE[args.dataset]
-    TRANSFORM = TRANSFORMS_TABLE[args.transform]
-    MODEL = MODEL_TABLE[args.GAN]
-
     ############# DATAMODULE ################
-    transform = TRANSFORM(
+    transform = build_transform(
+        args.transform,
         image_shape=[args.image_channels, args.image_size, args.image_size],
     )
-    datamodule = DATAMODULE(
+    datamodule = build_datamodule(
+        args.dataset,
         root_dir=args.root_dir,
         train_transforms=transform,
         val_transforms=transform,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
-
     ############# MODEL ################
-    model = MODEL(args)
+    model = build_model(args)
 
     ############# LOGGER ###############
     name = f"{args.GAN}-{args.dataset}"
@@ -127,8 +124,7 @@ def main(args):
         save_dir,
         f"{args.GAN}-{args.dataset}.jit",
     )
-    example_inputs = torch.rand([1, args.z_dim])
-    model.to_torchscript(torchscript_path, "trace", example_inputs)
+    model.to_torchscript(torchscript_path)
 
     if args.upload_artifacts:
         artifacts = wandb.Artifact(f"{args.GAN}-{args.dataset}", type="model")
