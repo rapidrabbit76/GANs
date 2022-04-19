@@ -7,6 +7,7 @@ from datamodules.MNIST import (
     KMnistDataModule,
 )
 from datamodules.CIFAR import CIFAR10DataModule, CIFAR100DataModule
+from datamodules.CelebA import CelebADataModule
 
 DATAMODULE_TABLE: Dict["str", pl.LightningDataModule] = {
     "MNIST": MnistDataModule,
@@ -15,6 +16,7 @@ DATAMODULE_TABLE: Dict["str", pl.LightningDataModule] = {
     "KMNIST": KMnistDataModule,
     "CIFAR10": CIFAR10DataModule,
     "CIFAR100": CIFAR100DataModule,
+    "CelebA": CelebADataModule,
 }
 
 DATAMODULE_LIST = list(DATAMODULE_TABLE.keys())
