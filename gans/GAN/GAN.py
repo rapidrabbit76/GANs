@@ -104,17 +104,19 @@ class GAN(pl.LightningModule):
             ],
         )
         # tensorboard logger
-        sample = make_grid(samples, int(self.hparams.sample_count ** 0.5))
+        sample = make_grid(
+            samples,
+            int(self.hparams.sample_count ** 0.5),
+            normalize=True,
+            value_range=(-1, 1),
+        )
         self.logger[0].experiment.add_image(
             "sample", sample, self.current_epoch
         )
 
         # wandb logger
         sample = wandb.Image(samples)
-        self.logger[1].experiment.log(
-            {"sample": sample},
-            step=self.global_step,
-        )
+        self.logger[1].experiment.log({"sample": sample}, step=self.global_step)
         self.train(True)
         torch.set_grad_enabled(True)
 
