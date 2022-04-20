@@ -1,7 +1,7 @@
 from typing import Dict
 import pytorch_lightning as pl
-from gans.GAN.GAN import GAN
-from gans.DCGAN.GAN import DCGAN
+from gans.GAN import GAN
+from gans.DCGAN import DCGAN
 
 
 MODEL_TABLE: Dict["str", "pl.LightningModule"] = {
