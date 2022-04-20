@@ -62,11 +62,17 @@ def hyperparameters():
     parser.add_argument("--image_channels", type=int, default=3)
 
     # training
-    parser.add_argument("--sample_count", type=int, default=64)
+    parser.add_argument("--sample_count", type=int, default=100)
     parser.add_argument("--g_lr", type=float, default=1e-4)
     parser.add_argument("--d_lr", type=float, default=1e-4)
     parser.add_argument("--b1", type=float, default=0.5)
     parser.add_argument("--b2", type=float, default=0.99)
+
+    # WGAN
+    parser.add_argument("--n_critic", type=int, default=5)
+    parser.add_argument("--critic_clip_value", type=float, default=0.01)
+    # WGAN-GP
+    parser.add_argument("--LAMBDA_GP", type=float, default=10.0)
 
     # logger
     parser.add_argument("--upload_artifacts", type=str2bool, default=True)
