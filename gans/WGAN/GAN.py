@@ -1,12 +1,14 @@
-import pytorch_lightning as pl
+import os
 
-
-import torch
-from torch import nn
-from torchvision.utils import make_grid
-from .model import Generator, Discriminator as Critic
 import losses
+import pytorch_lightning as pl
+import torch
 import wandb
+from torch import nn
+from torchvision.utils import make_grid, save_image
+
+from .model import Discriminator as Critic
+from .model import Generator
 
 Tensor = torch.Tensor
 
@@ -108,8 +110,15 @@ class WGAN(pl.LightningModule):
             "sample", sample, self.current_epoch
         )
 
+        filename = f"GS:{self.global_step}.png"
+        filepath = os.path.join(
+            self.logger[0].experiment.log_dir,
+            filename,
+        )
+        save_image(sample, filepath)
+
         # wandb logger
-        sample = wandb.Image(samples)
+        sample = wandb.Image(filepath)
         self.logger[1].experiment.log(
             {"sample": sample},
             step=self.global_step,
