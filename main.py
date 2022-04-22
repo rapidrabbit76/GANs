@@ -104,7 +104,7 @@ def main(args):
     ############# LOGGER ###############
     name = f"{args.GAN}-{args.dataset}"
     tb_logger = TensorBoardLogger("tensorboard", name=name)
-    wandb_logger = WandbLogger(project=args.project_name, name=name)
+    wandb_logger = WandbLogger(project=args.project_name, name=name, id=name)
     wandb_logger.watch(model, log="all", log_freq=args.log_every_n_steps)
     save_dir = wandb_logger.experiment.dir
 
