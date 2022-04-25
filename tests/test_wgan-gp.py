@@ -37,14 +37,6 @@ class TestWGANGP:
     def images(self, args):
         return tensor(args.batch_size, args.image_size, args.image_channels)
 
-    def test_gen_disc_inference(self, args, model, z, images):
-        x = model.generator(z)
-        assert x.shape == images.shape
-        x_ = model.critic(x).view([args.batch_size, -1])
-        x = model.critic(images).view([args.batch_size, -1])
-        assert list(x_.shape) == [args.batch_size, 1]
-        assert list(x.shape) == [args.batch_size, 1]
-
     def test_training_step(self, model, images):
         x = model.training_step((images, 0), 0, 0)
         assert list(x.shape) == []

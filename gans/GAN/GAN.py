@@ -1,14 +1,12 @@
 from random import sample
-import pytorch_lightning as pl
 
-
-import torch
-from torch import nn
-import torch.nn.functional as F
-from torchvision.utils import make_grid
-from .model import Generator, Discriminator
 import losses
+import pytorch_lightning as pl
+import torch
 import wandb
+from torchvision.utils import make_grid
+
+from .model import Discriminator, Generator
 
 Tensor = torch.Tensor
 
@@ -25,7 +23,12 @@ class GAN(pl.LightningModule):
         self.generator: Generator = Generator(self.hparams.z_dim, inp)
         self.discriminator = Discriminator(inp)
         self.gan_losses = losses.GAN
-        self.val_z = torch.randn(self.hparams.sample_count, self.hparams.z_dim)
+        self.val_z = self.get_noise().reshape([self.hparams.sample_count, -1])
+
+    def get_noise(self, N: int = 0) -> Tensor:
+        N = self.hparams.sample_count if N == 0 else N
+        z = torch.randn(N, self.hparams.z_dim, 1, 1)
+        return z
 
     def forward(self, z: Tensor) -> Tensor:
         x = self.generator(z)
@@ -61,12 +64,11 @@ class GAN(pl.LightningModule):
 
     def generator_step(self, images, batch_idx):
         N, *_ = images.shape
-        z = torch.randn(N, self.hparams.z_dim)
-        z = z.type_as(images)
+        z = self.get_noise(N).type_as(images).reshape([N, -1])
         self.fake = self(z)
         output = self.discriminator(self.fake)
         loss = self.gan_losses.calc_real_loss(output)
-        loss = {"loss": loss, "g_loss": loss}
+        loss = {"loss": loss, "g_loss": loss.item()}
         return loss
 
     def discriminator_step(self, images, batch_idx):
@@ -80,9 +82,9 @@ class GAN(pl.LightningModule):
         loss = (real_loss + fake_loss) * 0.5
         loss = {
             "loss": loss,
-            "d_loss": loss,
-            "prob/real_prob": torch.mean(torch.sigmoid(real_logits.detach())),
-            "prob/fake_prob": torch.mean(torch.sigmoid(fake_logits.detach())),
+            "d_loss": loss.item(),
+            "prob/real_prob": torch.mean(torch.sigmoid(real_logits)).item(),
+            "prob/fake_prob": torch.mean(torch.sigmoid(fake_logits)).item(),
         }
         return loss
 
@@ -106,7 +108,7 @@ class GAN(pl.LightningModule):
         # tensorboard logger
         sample = make_grid(
             samples,
-            int(self.hparams.sample_count ** 0.5),
+            int(self.hparams.sample_count**0.5),
             normalize=True,
             value_range=(-1, 1),
         )
@@ -121,6 +123,4 @@ class GAN(pl.LightningModule):
         torch.set_grad_enabled(True)
 
     def to_torchscript(self, file_path: str):
-        return super().to_torchscript(
-            file_path, "trace", torch.rand([1, self.hparams.z_dim])
-        )
+        return super().to_torchscript(file_path, "trace", self.val_z)
