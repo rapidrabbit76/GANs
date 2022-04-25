@@ -8,10 +8,12 @@ DATASET
 tensorboard/
 wandb/
 
+
 # CACHE
 **__pycache__**
+.coverage
+.testmondata
 
 # ETC
 *.sh
 old/
-
