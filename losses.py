@@ -27,3 +27,15 @@ class WGAN:
     def calc_fake_loss(cls, x: Tensor) -> Tensor:
         x = torch.mean(x)
         return x
+
+
+class LSGAN:
+    @classmethod
+    def calc_real_loss(cls, x: Tensor) -> Tensor:
+        x = torch.mean((x - 1.0) ** 2)
+        return x
+
+    @classmethod
+    def calc_fake_loss(cls, x: Tensor) -> Tensor:
+        x = torch.mean(x**2)
+        return x
