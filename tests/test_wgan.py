@@ -46,22 +46,18 @@ class TestWGAN:
         assert list(x_.shape) == [args.batch_size, 1]
         assert list(x.shape) == [args.batch_size, 1]
 
-    def test_gen_step(self, model, images):
+    def test_training_step(self, model, images):
         x = model.training_step((images, 0), 0, 0)
         assert list(x.shape) == []
 
-    def test_disc_step(self, model, images):
         x = model.training_step((images, 0), 0, 1)
         assert list(x.shape) == []
 
-    def test_save_to_torchscript(self, model, save_dir):
+    def test_torchscript(self, model, save_dir, z, images):
         torchscript_path = os.path.join(save_dir.name, "temp.jit")
         model.to_torchscript(torchscript_path)
         assert os.path.exists(torchscript_path)
 
-    def test_torchscript_inference(self, save_dir, z, images):
-        torchscript_path = os.path.join(save_dir.name, "temp.jit")
         model = torch.jit.load(torchscript_path)
         x = model(z)
-        N, C, H, W = images.shape
         assert x.shape == images.shape
