@@ -138,10 +138,7 @@ class WGANGP(pl.LightningModule):
         )
 
         filename = f"GS:{self.global_step}.png"
-        filepath = os.path.join(
-            self.logger[0].experiment.log_dir,
-            filename,
-        )
+        filepath = os.path.join(self.logger[0].experiment.log_dir, filename)
         save_image(sample, filepath)
 
         # wandb logger
